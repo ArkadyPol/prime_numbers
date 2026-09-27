@@ -1,0 +1,15 @@
+[package]
+name = "main"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+prime_single_thread = { workspace = true }
+simple_multi_thread = { workspace = true }
+channel_multi_thread = { workspace = true }
+arc_multi_thread = { workspace = true }
+sieve_single_thread = { workspace = true }
+sieve_multi_thread = { workspace = true }
+bit_sieve_multi_thread = { workspace = true }
+segmented_single_thread ={ workspace = true }
+segmented_multi_thread = { workspace = true }

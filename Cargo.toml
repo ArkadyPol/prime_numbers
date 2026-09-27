@@ -1,0 +1,14 @@
+[workspace]
+resolver = "3"
+members = ["bit_sieve_multi_thread","channel_multi_thread","main", "arc_multi_thread", "prime_single_thread", "segmented_multi_thread", "segmented_single_thread", "sieve_multi_thread", "sieve_single_thread", "simple_multi_thread"]
+
+[workspace.dependencies]
+prime_single_thread = { path = "prime_single_thread" }
+simple_multi_thread = { path = "simple_multi_thread" }
+channel_multi_thread = { path = "channel_multi_thread" }
+arc_multi_thread = { path = "arc_multi_thread" }
+sieve_single_thread = { path = "sieve_single_thread" }
+sieve_multi_thread = { path = "sieve_multi_thread" }
+bit_sieve_multi_thread = { path = "bit_sieve_multi_thread"}
+segmented_single_thread = { path = "segmented_single_thread"}
+segmented_multi_thread = { path = "segmented_multi_thread"}
