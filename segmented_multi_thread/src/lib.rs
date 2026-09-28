@@ -195,12 +195,14 @@ fn fill_segment(
     let mut idx = 0;
 
     while idx < shift {
-        let byte = sieve[idx / 8];
+        let mut bits = !sieve[idx / 8];
 
-        for bit in 0..8 {
-            if byte & (1 << bit) == 0 {
-                output.push(get_number_by_idx(start_idx + idx + bit));
-            }
+        while bits != 0 {
+            let bit = bits.trailing_zeros() as usize;
+
+            output.push(get_number_by_idx(start_idx + idx + bit));
+
+            bits &= bits - 1;
         }
 
         idx += 8;
