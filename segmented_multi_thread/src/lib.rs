@@ -195,13 +195,16 @@ fn fill_segment(
     let mut idx = 0;
 
     while idx < shift {
+        // Inverted byte: 1 means the candidate is prime.
         let mut bits = !sieve[idx / 8];
 
         while bits != 0 {
+            // Find the next prime candidate in this byte.
             let bit = bits.trailing_zeros() as usize;
 
             output.push(get_number_by_idx(start_idx + idx + bit));
 
+            // Clear the lowest set bit so the next iteration finds the next one.
             bits &= bits - 1;
         }
 
