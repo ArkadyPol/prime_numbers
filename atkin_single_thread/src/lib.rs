@@ -1,11 +1,11 @@
-const BASE_SIZE: usize = 100 * 16; // 1600 кандидатов ≈ 6000 чисел
-const SEGMENT_SIZE: usize = 32_500 * 16; // 520_000 кандидатов ≈ 1_950_000 чисел
+const BASE_SIZE: usize = 250 * 16; // 4000 кандидатов ≈ 15000 чисел
+const SEGMENT_SIZE: usize = 200_000 * 16; // 3_200_000 кандидатов ≈ 12_000_000 чисел
 const REMAINDERS: [u64; 16] = [1, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 49, 53, 59];
 
 pub struct AtkinPrimeGenerator {
     base_size: usize,
     base_primes: Vec<u64>,
-    segment_sieve: Vec<bool>,
+    segment_sieve: Vec<u8>,
     segment_output: Vec<u64>,
     segment_idx: usize,
     segment_pos: usize,
@@ -48,7 +48,7 @@ impl AtkinPrimeGenerator {
         AtkinPrimeGenerator {
             base_size: BASE_SIZE,
             base_primes,
-            segment_sieve: vec![false; SEGMENT_SIZE],
+            segment_sieve: vec![0; SEGMENT_SIZE / 8],
             segment_output: Vec::new(),
             segment_idx: 0,
             segment_pos: 0,
@@ -57,7 +57,7 @@ impl AtkinPrimeGenerator {
     }
 
     fn expand_base_primes(&mut self) {
-        let mut new_sieve = vec![false; BASE_SIZE];
+        let mut new_sieve = vec![0; BASE_SIZE / 8];
         let mut new_base_primes = Vec::new();
 
         fill_segment(
@@ -133,10 +133,10 @@ fn fill_segment(
     primes: &[u64],
     start_idx: usize,
     shift: usize,
-    sieve: &mut [bool],
+    sieve: &mut [u8],
     output: &mut Vec<u64>,
 ) {
-    sieve.fill(false);
+    sieve.fill(0);
     output.clear();
 
     let start = get_number_by_idx(start_idx);
@@ -155,13 +155,13 @@ fn fill_segment(
     free_squares(primes, start_idx, sieve, start, limit);
 
     for idx in 0..shift {
-        if sieve[idx] {
+        if is_prime_bit(sieve, idx) {
             output.push(get_number_by_idx(start_idx + idx));
         }
     }
 }
 
-fn first_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64) {
+fn first_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
     for x in 1.. {
         let x2 = 4 * x * x;
         if x2 > limit {
@@ -195,7 +195,7 @@ fn first_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64) 
 
                 if let Some(idx) = get_idx_by_number(n) {
                     let local_idx = idx - start_idx;
-                    sieve[local_idx] = !sieve[local_idx];
+                    toggle_bit(sieve, local_idx);
                 }
 
                 y += step;
@@ -210,14 +210,14 @@ fn first_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64) 
 
                 if let Some(idx) = get_idx_by_number(n) {
                     let local_idx = idx - start_idx;
-                    sieve[local_idx] = !sieve[local_idx];
+                    toggle_bit(sieve, local_idx);
                 }
             }
         }
     }
 }
 
-fn second_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64) {
+fn second_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
     for x in (1..).step_by(2) {
         let x2 = 3 * x * x;
         if x2 > limit {
@@ -250,7 +250,7 @@ fn second_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64)
 
             if let Some(idx) = get_idx_by_number(n) {
                 let local_idx = idx - start_idx;
-                sieve[local_idx] = !sieve[local_idx];
+                toggle_bit(sieve, local_idx);
             }
 
             y += step;
@@ -259,7 +259,7 @@ fn second_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64)
     }
 }
 
-fn third_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64) {
+fn third_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
     let mut x_start = ((start + 1) / 3).isqrt().max(2);
     if 3 * x_start * x_start < start + 1 {
         x_start += 1;
@@ -304,7 +304,7 @@ fn third_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64) 
 
             if let Some(idx) = get_idx_by_number(n) {
                 let local_idx = idx - start_idx;
-                sieve[local_idx] = !sieve[local_idx];
+                toggle_bit(sieve, local_idx);
             }
 
             y += step;
@@ -313,7 +313,7 @@ fn third_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64) 
     }
 }
 
-fn free_squares(primes: &[u64], start_idx: usize, sieve: &mut [bool], start: u64, limit: u64) {
+fn free_squares(primes: &[u64], start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
     for &prime in primes {
         let square = prime * prime;
 
@@ -333,11 +333,33 @@ fn free_squares(primes: &[u64], start_idx: usize, sieve: &mut [bool], start: u64
 
         while composite <= limit {
             let idx = get_idx_by_number(composite).unwrap();
-            sieve[idx - start_idx] = false;
+            set_composite_bit(sieve, idx - start_idx);
             composite = square * get_number_by_idx(i);
             i += 1;
         }
     }
+}
+
+#[inline(always)]
+fn toggle_bit(sieve: &mut [u8], idx: usize) {
+    let byte_idx = idx / 8;
+    let bit_idx = idx % 8;
+
+    sieve[byte_idx] ^= 1 << bit_idx;
+}
+
+#[inline(always)]
+fn set_composite_bit(sieve: &mut [u8], local_idx: usize) {
+    let byte_idx = local_idx / 8;
+    let bit_idx = local_idx % 8;
+    sieve[byte_idx] &= !(1 << bit_idx);
+}
+
+#[inline(always)]
+fn is_prime_bit(sieve: &[u8], idx: usize) -> bool {
+    let byte_idx = idx / 8;
+    let bit_idx = idx % 8;
+    (sieve[byte_idx] & (1 << bit_idx)) != 0
 }
 
 #[cfg(test)]
