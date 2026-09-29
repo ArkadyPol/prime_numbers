@@ -234,7 +234,15 @@ fn second_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64)
             y_start += 1;
         }
 
-        for y in (y_start..).step_by(2) {
+        let mut y = y_start;
+
+        if y % 3 == 0 {
+            y += 2;
+        }
+
+        let mut step = if y % 6 == 2 { 2 } else { 4 };
+
+        loop {
             let n = x2 + y * y;
             if n > limit {
                 break;
@@ -244,6 +252,9 @@ fn second_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64)
                 let local_idx = idx - start_idx;
                 sieve[local_idx] = !sieve[local_idx];
             }
+
+            y += step;
+            step = 6 - step; // 2 -> 4 -> 2 -> 4
         }
     }
 }
