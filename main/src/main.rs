@@ -1,10 +1,10 @@
 use std::time::Instant;
 
-use atkin_single_thread::AtkinPrimeGenerator;
+use segmented_single_thread::SegmentedPrimeGenerator;
 
 fn main() {
     let count = 100_000_000;
-    let primes = AtkinPrimeGenerator::new();
+    let primes = SegmentedPrimeGenerator::new();
 
     let start = Instant::now();
 

@@ -52,44 +52,18 @@ impl SegmentedPrimeGenerator {
     }
 
     fn expand_base_primes(&mut self) {
-        let old_len_bits = self.base_size;
         let mut new_sieve = vec![0; BASE_SIZE / 8];
+        let mut new_base_primes = Vec::new();
 
-        let start = get_number_by_idx(old_len_bits);
-        let limit = get_number_by_idx(old_len_bits + BASE_SIZE - 1);
+        fill_segment(
+            &self.base_primes,
+            self.base_size,
+            BASE_SIZE,
+            &mut new_sieve,
+            &mut new_base_primes,
+        );
 
-        for &prime in &self.base_primes {
-            if prime * prime > limit {
-                break;
-            }
-
-            let mut i = (start + prime - 1) / prime;
-
-            if i % 2 == 0 {
-                i += 1;
-            }
-
-            if i < prime {
-                i = prime;
-            }
-
-            let composite = prime * i;
-
-            let mut local_idx = ((composite - start) / 2) as usize;
-            let step_idx = prime as usize;
-
-            while local_idx < BASE_SIZE {
-                set_composite_bit(&mut new_sieve, local_idx);
-                local_idx += step_idx;
-            }
-        }
-
-        for idx in 0..new_sieve.len() * 8 {
-            if !is_composite_bit(&new_sieve, idx) {
-                self.base_primes.push(get_number_by_idx(old_len_bits + idx));
-            }
-        }
-
+        self.base_primes.extend(new_base_primes);
         self.base_size += BASE_SIZE;
     }
 }
@@ -194,10 +168,23 @@ fn fill_segment(
         }
     }
 
-    for idx in 0..sieve.len() * 8 {
-        if !is_composite_bit(sieve, idx) {
-            output.push(get_number_by_idx(start_idx + idx));
+    let mut idx = 0;
+
+    while idx < shift {
+        // Инвертированный байт: 1 означает, что кандидат является простым числом.
+        let mut bits = !sieve[idx / 8];
+
+        while bits != 0 {
+            // Находим следующее число в этом байте, являющееся кандидатом в простые числа.
+            let bit = bits.trailing_zeros() as usize;
+
+            output.push(get_number_by_idx(start_idx + idx + bit));
+
+            // Очищаем младший установленный бит, чтобы на следующей итерации найти следующий.
+            bits &= bits - 1;
         }
+
+        idx += 8;
     }
 }
 
@@ -219,7 +206,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn it_works_for_big_numbers() {
         let count = 10_000_000;
         let primes = SegmentedPrimeGenerator::new();
