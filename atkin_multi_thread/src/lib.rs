@@ -1,8 +1,8 @@
 use std::thread;
 
 const BASE_SIZE: usize = 250 * 16; // 4000 кандидатов ≈ 15000 чисел
-const SEGMENT_SIZE: usize = 125_000 * 16; // 3_200_000 кандидатов ≈ 6_000_000 чисел
-const THREADS_COUNT: usize = 16; // итого 6 млн * 16 = 96 млн чисел
+const SEGMENT_SIZE: usize = 125_000 * 16; // 2_000_000 кандидатов ≈ 7_500_000 чисел
+const THREADS_COUNT: usize = 16; // итого 7.5 млн * 16 = 120 млн чисел
 const REMAINDERS: [u64; 16] = [1, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 49, 53, 59];
 const fn make_rem_to_idx() -> [i8; 60] {
     let mut table = [-1i8; 60];
