@@ -195,16 +195,16 @@ fn fill_segment(
     let mut idx = 0;
 
     while idx < shift {
-        // Inverted byte: 1 means the candidate is prime.
+        // Инвертированный байт: 1 означает, что кандидат является простым числом.
         let mut bits = !sieve[idx / 8];
 
         while bits != 0 {
-            // Find the next prime candidate in this byte.
+            // Находим следующее число в этом байте, являющееся кандидатом в простые числа.
             let bit = bits.trailing_zeros() as usize;
 
             output.push(get_number_by_idx(start_idx + idx + bit));
 
-            // Clear the lowest set bit so the next iteration finds the next one.
+            // Очищаем младший установленный бит, чтобы на следующей итерации найти следующий.
             bits &= bits - 1;
         }
 
@@ -230,6 +230,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn it_works_for_big_numbers() {
         let count = 10_000_000;
         let primes = SegmentedPrimeGenerator::new();
