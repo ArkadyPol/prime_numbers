@@ -1,6 +1,19 @@
 const BASE_SIZE: usize = 250 * 16; // 4000 кандидатов ≈ 15000 чисел
 const SEGMENT_SIZE: usize = 200_000 * 16; // 3_200_000 кандидатов ≈ 12_000_000 чисел
 const REMAINDERS: [u64; 16] = [1, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 49, 53, 59];
+const fn make_rem_to_idx() -> [i8; 60] {
+    let mut table = [-1i8; 60];
+    let mut i = 0;
+
+    while i < REMAINDERS.len() {
+        table[REMAINDERS[i] as usize] = i as i8;
+        i += 1;
+    }
+
+    table
+}
+
+const REM_TO_IDX: [i8; 60] = make_rem_to_idx();
 
 pub struct AtkinPrimeGenerator {
     base_size: usize,
@@ -123,10 +136,16 @@ fn get_number_by_idx(idx: usize) -> u64 {
 
 #[inline(always)]
 fn get_idx_by_number(number: u64) -> Option<usize> {
-    let quotient = (number / 60) as usize;
-    let remainder = number % 60;
-    let rem_idx = REMAINDERS.iter().position(|&x| x == remainder)?;
-    Some(quotient * 16 + rem_idx)
+    let quotient = number / 60;
+    let remainder = (number % 60) as usize;
+
+    let rem_idx = REM_TO_IDX[remainder];
+
+    if rem_idx < 0 {
+        None
+    } else {
+        Some(quotient as usize * 16 + rem_idx as usize)
+    }
 }
 
 fn fill_segment(
@@ -333,7 +352,7 @@ fn free_squares(primes: &[u64], start_idx: usize, sieve: &mut [u8], start: u64, 
 
         let mut multiplier = (start + square - 1) / square;
 
-        while !REMAINDERS.contains(&(multiplier % 60)) {
+        while REM_TO_IDX[(multiplier % 60) as usize] < 0 {
             multiplier += 1;
         }
 
