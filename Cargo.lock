@@ -7,6 +7,10 @@ name = "arc_multi_thread"
 version = "0.1.0"
 
 [[package]]
+name = "atkin_multi_thread"
+version = "0.1.0"
+
+[[package]]
 name = "atkin_single_thread"
 version = "0.1.0"
 
@@ -23,6 +27,7 @@ name = "main"
 version = "0.1.0"
 dependencies = [
  "arc_multi_thread",
+ "atkin_multi_thread",
  "atkin_single_thread",
  "bit_sieve_multi_thread",
  "channel_multi_thread",

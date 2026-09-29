@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use segmented_single_thread::SegmentedPrimeGenerator;
+use segmented_multi_thread::SegmentedPrimeGenerator;
 
 fn main() {
     let count = 100_000_000;

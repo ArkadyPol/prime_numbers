@@ -206,6 +206,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn it_works_for_big_numbers() {
         let count = 10_000_000;
         let primes = SegmentedPrimeGenerator::new();

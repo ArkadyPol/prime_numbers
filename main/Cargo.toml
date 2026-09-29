@@ -14,3 +14,4 @@ bit_sieve_multi_thread = { workspace = true }
 segmented_single_thread ={ workspace = true }
 segmented_multi_thread = { workspace = true }
 atkin_single_thread = { workspace = true }
+atkin_multi_thread = { workspace = true }
