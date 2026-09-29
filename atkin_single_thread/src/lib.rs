@@ -154,10 +154,20 @@ fn fill_segment(
     // удаление кратныx квадратам простых чисел
     free_squares(primes, start_idx, sieve, start, limit);
 
-    for idx in 0..shift {
-        if is_prime_bit(sieve, idx) {
-            output.push(get_number_by_idx(start_idx + idx));
+    let mut idx = 0;
+
+    while idx < shift {
+        let mut bits = sieve[idx / 8];
+
+        while bits != 0 {
+            let bit = bits.trailing_zeros() as usize;
+
+            output.push(get_number_by_idx(start_idx + idx + bit));
+
+            bits &= bits - 1;
         }
+
+        idx += 8;
     }
 }
 
@@ -353,13 +363,6 @@ fn set_composite_bit(sieve: &mut [u8], local_idx: usize) {
     let byte_idx = local_idx / 8;
     let bit_idx = local_idx % 8;
     sieve[byte_idx] &= !(1 << bit_idx);
-}
-
-#[inline(always)]
-fn is_prime_bit(sieve: &[u8], idx: usize) -> bool {
-    let byte_idx = idx / 8;
-    let bit_idx = idx % 8;
-    (sieve[byte_idx] & (1 << bit_idx)) != 0
 }
 
 #[cfg(test)]
