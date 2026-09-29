@@ -1,5 +1,5 @@
 const BASE_SIZE: usize = 100 * 16; // 1600 кандидатов ≈ 6000 чисел
-const SEGMENT_SIZE: usize = 37_500 * 16; // 600_000 кандидатов ≈ 2_250_000 чисел
+const SEGMENT_SIZE: usize = 32_500 * 16; // 520_000 кандидатов ≈ 1_950_000 чисел
 const REMAINDERS: [u64; 16] = [1, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 49, 53, 59];
 
 pub struct AtkinPrimeGenerator {
@@ -282,8 +282,22 @@ fn third_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64) 
             y_start += 1;
         }
 
-        for y in (y_start..x).step_by(2) {
+        let mut y = y_start;
+        if y % 3 == 0 {
+            y += 2;
+        }
+
+        let mut step = match y % 6 {
+            1 => 4,
+            2 => 2,
+            4 => 4,
+            5 => 2,
+            _ => unreachable!(),
+        };
+
+        while y < x {
             let n = x2 - y * y;
+
             if n < start {
                 break;
             }
@@ -292,6 +306,9 @@ fn third_equation(start_idx: usize, sieve: &mut [bool], start: u64, limit: u64) 
                 let local_idx = idx - start_idx;
                 sieve[local_idx] = !sieve[local_idx];
             }
+
+            y += step;
+            step = 6 - step;
         }
     }
 }
