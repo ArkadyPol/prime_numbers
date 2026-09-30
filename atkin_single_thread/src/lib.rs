@@ -201,31 +201,14 @@ fn first_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
         let mut y_start = if start <= x2 + 1 {
             1
         } else {
-            (start - x2 - 1).isqrt() + 1
+            (start - x2 - 1).isqrt() + 1 // округление корня вверх 2..=4 -> 2, 10..=16 -> 4 
         };
 
         if y_start % 2 == 0 {
             y_start += 1;
         }
 
-        if x % 3 == 0 {
-            let mut y = y_start;
-
-            if y % 3 == 0 {
-                y += 2;
-            }
-
-            let mut step = if y % 6 == 1 { 4 } else { 2 };
-            let mut n = x2 + y * y;
-
-            while n <= limit {
-                try_toggle(start_idx, sieve, n);
-
-                y += step;
-                n = x2 + y * y;
-                step = 6 - step; // 4 -> 2 -> 4 -> 2...
-            }
-        } else {
+        if x % 3 != 0 {
             let mut n = x2 + y_start * y_start;
             // (y + 2)² - y² = 4*y + 4
             let mut delta = 4 * y_start + 4;
@@ -236,6 +219,22 @@ fn first_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
                 n += delta;
                 // 4*(y+2)+4 = (4y+4) + 8
                 delta += 8;
+            }
+        } else {
+            if y_start % 3 == 0 {
+                y_start += 2;
+            }
+
+            let mut y = y_start;
+            let mut step = if y % 6 == 1 { 4 } else { 2 };
+            let mut n = x2 + y * y;
+
+            while n <= limit {
+                try_toggle(start_idx, sieve, n);
+
+                y += step;
+                n = x2 + y * y;
+                step = 6 - step; // 4 -> 2 -> 4 -> 2...
             }
         }
     }
