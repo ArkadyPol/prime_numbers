@@ -193,7 +193,8 @@ fn fill_segment(
 fn first_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
     for x in 1.. {
         let x2 = 4 * x * x;
-        if x2 > limit {
+
+        if x2 + 1 > limit {
             break;
         }
 
@@ -215,32 +216,32 @@ fn first_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
             }
 
             let mut step = if y % 6 == 1 { 4 } else { 2 };
+            let mut n = x2 + y * y;
 
-            loop {
-                let n = x2 + y * y;
-                if n > limit {
-                    break;
-                }
-
+            while n <= limit {
                 if let Some(idx) = get_idx_by_number(n) {
                     let local_idx = idx - start_idx;
                     toggle_bit(sieve, local_idx);
                 }
 
                 y += step;
+                n = x2 + y * y;
                 step = 6 - step; // 4 -> 2 -> 4 -> 2...
             }
         } else {
-            for y in (y_start..).step_by(2) {
-                let n = x2 + y * y;
-                if n > limit {
-                    break;
-                }
+            let mut n = x2 + y_start * y_start;
+            // (y + 2)² - y² = 4*y + 4
+            let mut delta = 4 * y_start + 4;
 
+            while n <= limit {
                 if let Some(idx) = get_idx_by_number(n) {
                     let local_idx = idx - start_idx;
                     toggle_bit(sieve, local_idx);
                 }
+
+                n += delta;
+                // 4*(y+2)+4 = (4y+4) + 8
+                delta += 8;
             }
         }
     }
@@ -249,7 +250,7 @@ fn first_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
 fn second_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
     for x in (1..).step_by(2) {
         let x2 = 3 * x * x;
-        if x2 > limit {
+        if x2 + 4 > limit {
             break;
         }
 
