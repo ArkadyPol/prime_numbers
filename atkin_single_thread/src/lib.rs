@@ -219,10 +219,7 @@ fn first_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
             let mut n = x2 + y * y;
 
             while n <= limit {
-                if let Some(idx) = get_idx_by_number(n) {
-                    let local_idx = idx - start_idx;
-                    toggle_bit(sieve, local_idx);
-                }
+                try_toggle(start_idx, sieve, n);
 
                 y += step;
                 n = x2 + y * y;
@@ -234,10 +231,7 @@ fn first_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
             let mut delta = 4 * y_start + 4;
 
             while n <= limit {
-                if let Some(idx) = get_idx_by_number(n) {
-                    let local_idx = idx - start_idx;
-                    toggle_bit(sieve, local_idx);
-                }
+                try_toggle(start_idx, sieve, n);
 
                 n += delta;
                 // 4*(y+2)+4 = (4y+4) + 8
@@ -278,10 +272,7 @@ fn second_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
                 break;
             }
 
-            if let Some(idx) = get_idx_by_number(n) {
-                let local_idx = idx - start_idx;
-                toggle_bit(sieve, local_idx);
-            }
+            try_toggle(start_idx, sieve, n);
 
             y += step;
             step = 6 - step; // 2 -> 4 -> 2 -> 4
@@ -332,10 +323,7 @@ fn third_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
                 break;
             }
 
-            if let Some(idx) = get_idx_by_number(n) {
-                let local_idx = idx - start_idx;
-                toggle_bit(sieve, local_idx);
-            }
+            try_toggle(start_idx, sieve, n);
 
             y += step;
             step = 6 - step;
@@ -371,10 +359,17 @@ fn free_squares(primes: &[u64], start_idx: usize, sieve: &mut [u8], start: u64, 
 }
 
 #[inline(always)]
+fn try_toggle(start_idx: usize, sieve: &mut [u8], n: u64) {
+    if let Some(idx) = get_idx_by_number(n) {
+        let local_idx = idx - start_idx;
+        toggle_bit(sieve, local_idx);
+    }
+}
+
+#[inline(always)]
 fn toggle_bit(sieve: &mut [u8], idx: usize) {
     let byte_idx = idx / 8;
     let bit_idx = idx % 8;
-
     sieve[byte_idx] ^= 1 << bit_idx;
 }
 
