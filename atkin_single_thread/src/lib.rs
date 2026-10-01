@@ -247,6 +247,7 @@ fn second_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
             break;
         }
 
+        // Быстрый фильтр: если разница <= 4, y_start гарантированно равен 2.
         let mut y_start = if start <= x2 + 4 {
             2
         } else {
@@ -257,33 +258,31 @@ fn second_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
             y_start += 1;
         }
 
-        let mut y = y_start;
-
-        if y % 3 == 0 {
-            y += 2;
+        if y_start % 3 == 0 {
+            y_start += 2;
         }
 
+        let mut y = y_start;
         let mut step = if y % 6 == 2 { 2 } else { 4 };
+        let mut n = x2 + y * y;
 
-        loop {
-            let n = x2 + y * y;
-            if n > limit {
-                break;
-            }
-
+        while n <= limit {
             try_toggle(start_idx, sieve, n);
 
             y += step;
+            n = x2 + y * y;
             step = 6 - step; // 2 -> 4 -> 2 -> 4
         }
     }
 }
 
 fn third_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
-    let mut x_start = ((start + 1) / 3).isqrt().max(2);
-    if 3 * x_start * x_start < start + 1 {
-        x_start += 1;
-    }
+    // Размер сегмента не может быть меньше 60
+    let x_start = if start >= 61 {
+        (start / 3).isqrt() + 1
+    } else {
+        2
+    };
 
     for x in x_start.. {
         let x2 = 3 * x * x;
@@ -302,10 +301,11 @@ fn third_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
             y_start += 1;
         }
 
-        let mut y = y_start;
-        if y % 3 == 0 {
-            y += 2;
+        if y_start % 3 == 0 {
+            y_start += 2;
         }
+
+        let mut y = y_start;
 
         let mut step = match y % 6 {
             1 => 4,
@@ -315,15 +315,12 @@ fn third_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
             _ => unreachable!(),
         };
 
-        while y < x {
-            let n = x2 - y * y;
+        let mut n = x2 - y * y;
 
-            if n < start {
-                break;
-            }
-
+        while n >= start && y < x {
             try_toggle(start_idx, sieve, n);
 
+            n -= 2 * y * step + step * step;
             y += step;
             step = 6 - step;
         }
