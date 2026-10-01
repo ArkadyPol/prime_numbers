@@ -221,54 +221,48 @@ fn fill_segment(
 fn first_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
     for x in 1.. {
         let x2 = 4 * x * x;
-        if x2 > limit {
+
+        if x2 + 1 > limit {
             break;
         }
 
         let mut y_start = if start <= x2 + 1 {
             1
         } else {
-            (start - x2 - 1).isqrt() + 1
+            (start - x2 - 1).isqrt() + 1 // округление корня вверх 2..=4 -> 2, 10..=16 -> 4 
         };
 
         if y_start % 2 == 0 {
             y_start += 1;
         }
 
-        if x % 3 == 0 {
-            let mut y = y_start;
+        if x % 3 != 0 {
+            let mut n = x2 + y_start * y_start;
+            // (y + 2)² - y² = 4*y + 4
+            let mut delta = 4 * y_start + 4;
 
-            if y % 3 == 0 {
-                y += 2;
-            }
+            while n <= limit {
+                try_toggle(start_idx, sieve, n);
 
-            let mut step = if y % 6 == 1 { 4 } else { 2 };
-
-            loop {
-                let n = x2 + y * y;
-                if n > limit {
-                    break;
-                }
-
-                if let Some(idx) = get_idx_by_number(n) {
-                    let local_idx = idx - start_idx;
-                    toggle_bit(sieve, local_idx);
-                }
-
-                y += step;
-                step = 6 - step; // 4 -> 2 -> 4 -> 2...
+                n += delta;
+                // 4*(y+2)+4 = (4y+4) + 8
+                delta += 8;
             }
         } else {
-            for y in (y_start..).step_by(2) {
-                let n = x2 + y * y;
-                if n > limit {
-                    break;
-                }
+            if y_start % 3 == 0 {
+                y_start += 2;
+            }
 
-                if let Some(idx) = get_idx_by_number(n) {
-                    let local_idx = idx - start_idx;
-                    toggle_bit(sieve, local_idx);
-                }
+            let mut y = y_start;
+            let mut step = if y % 6 == 1 { 4 } else { 2 };
+            let mut n = x2 + y * y;
+
+            while n <= limit {
+                try_toggle(start_idx, sieve, n);
+
+                y += step;
+                n = x2 + y * y;
+                step = 6 - step; // 4 -> 2 -> 4 -> 2...
             }
         }
     }
@@ -277,10 +271,11 @@ fn first_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
 fn second_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
     for x in (1..).step_by(2) {
         let x2 = 3 * x * x;
-        if x2 > limit {
+        if x2 + 4 > limit {
             break;
         }
 
+        // Быстрый фильтр: если разница <= 4, y_start гарантированно равен 2.
         let mut y_start = if start <= x2 + 4 {
             2
         } else {
@@ -291,36 +286,31 @@ fn second_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
             y_start += 1;
         }
 
-        let mut y = y_start;
-
-        if y % 3 == 0 {
-            y += 2;
+        if y_start % 3 == 0 {
+            y_start += 2;
         }
 
+        let mut y = y_start;
         let mut step = if y % 6 == 2 { 2 } else { 4 };
+        let mut n = x2 + y * y;
 
-        loop {
-            let n = x2 + y * y;
-            if n > limit {
-                break;
-            }
-
-            if let Some(idx) = get_idx_by_number(n) {
-                let local_idx = idx - start_idx;
-                toggle_bit(sieve, local_idx);
-            }
+        while n <= limit {
+            try_toggle(start_idx, sieve, n);
 
             y += step;
+            n = x2 + y * y;
             step = 6 - step; // 2 -> 4 -> 2 -> 4
         }
     }
 }
 
 fn third_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
-    let mut x_start = ((start + 1) / 3).isqrt().max(2);
-    if 3 * x_start * x_start < start + 1 {
-        x_start += 1;
-    }
+    // Размер сегмента не может быть меньше 60
+    let x_start = if start >= 61 {
+        (start / 3).isqrt() + 1
+    } else {
+        2
+    };
 
     for x in x_start.. {
         let x2 = 3 * x * x;
@@ -339,10 +329,11 @@ fn third_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
             y_start += 1;
         }
 
-        let mut y = y_start;
-        if y % 3 == 0 {
-            y += 2;
+        if y_start % 3 == 0 {
+            y_start += 2;
         }
+
+        let mut y = y_start;
 
         let mut step = match y % 6 {
             1 => 4,
@@ -352,18 +343,12 @@ fn third_equation(start_idx: usize, sieve: &mut [u8], start: u64, limit: u64) {
             _ => unreachable!(),
         };
 
-        while y < x {
-            let n = x2 - y * y;
+        let mut n = x2 - y * y;
 
-            if n < start {
-                break;
-            }
+        while n >= start && y < x {
+            try_toggle(start_idx, sieve, n);
 
-            if let Some(idx) = get_idx_by_number(n) {
-                let local_idx = idx - start_idx;
-                toggle_bit(sieve, local_idx);
-            }
-
+            n -= 2 * y * step + step * step;
             y += step;
             step = 6 - step;
         }
@@ -394,6 +379,14 @@ fn free_squares(primes: &[u64], start_idx: usize, sieve: &mut [u8], start: u64, 
             composite = square * get_number_by_idx(i);
             i += 1;
         }
+    }
+}
+
+#[inline(always)]
+fn try_toggle(start_idx: usize, sieve: &mut [u8], n: u64) {
+    if let Some(idx) = get_idx_by_number(n) {
+        let local_idx = idx - start_idx;
+        toggle_bit(sieve, local_idx);
     }
 }
 

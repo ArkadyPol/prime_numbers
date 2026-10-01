@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use atkin_single_thread::AtkinPrimeGenerator;
+use atkin_multi_thread::AtkinPrimeGenerator;
 
 fn main() {
     let mut all_duration = Duration::new(0, 0);
